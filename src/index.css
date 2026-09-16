@@ -1,0 +1,37 @@
+:root {
+  --text: #1b4332;
+  --muted: #52796f;
+  --bg: #f4f7f5;
+  --panel: #ffffff;
+  --border: #c5d5cc;
+  --accent: #2d6a4f;
+  --sans: system-ui, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
