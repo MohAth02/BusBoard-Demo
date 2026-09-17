@@ -5,8 +5,10 @@ import { StopPanel } from './StopPanel'
 import {
   SEARCH_RADIUS_M,
   fetchArrivals,
+  fetchCrowding,
   fetchLineRoute,
   fetchNearbyStops,
+  isTubeStop,
   routeKey,
   type Arrival,
   type Stop,
@@ -27,6 +29,7 @@ function App() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null)
   const [routePath, setRoutePath] = useState<[number, number][] | null>(null)
+  const [crowding, setCrowding] = useState<number | null>(null)
 
   function clearRoute() {
     setSelectedRoute(null)
@@ -41,6 +44,7 @@ function App() {
     setPanelOpen(false)
     setStopsError(null)
     clearRoute()
+    setCrowding(null)
   }
 
   useEffect(() => {
@@ -103,12 +107,31 @@ function App() {
     }
   }, [selected])
 
+  useEffect(() => {
+    if (!selected || !isTubeStop(selected)) return
+    const stopId = selected.id
+    let cancelled = false
+
+    fetchCrowding(stopId)
+      .then((level) => {
+        if (!cancelled) setCrowding(level)
+      })
+      .catch(() => {
+        if (!cancelled) setCrowding(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selected])
+
   function handleStopClick(stop: Stop) {
     setSelected(stop)
     setPanelOpen(true)
     setArrivals([])
     setArrivalsLoading(true)
     setArrivalsError(null)
+    setCrowding(null)
     clearRoute()
   }
 
@@ -171,6 +194,7 @@ function App() {
         error={arrivalsError}
         open={panelOpen}
         selectedRoute={selectedRoute}
+        crowding={crowding}
         onToggle={() => setPanelOpen((value) => !value)}
         onRefresh={handleRefresh}
         onArrivalClick={handleArrivalClick}

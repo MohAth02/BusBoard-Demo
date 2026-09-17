@@ -56,6 +56,11 @@ type SequenceJson = {
   stopPointSequences?: { stopPoint?: SequenceStopJson[] }[]
 }
 
+type CrowdingLiveJson = {
+  dataAvailable?: boolean
+  percentageOfBaseline?: number
+}
+
 function withKey(url: URL) {
   const key = import.meta.env.VITE_TFL_APP_KEY
   if (typeof key === 'string' && key.length > 0) {
@@ -121,7 +126,7 @@ export function formatWait(seconds: number): string {
   const mins = Math.round(seconds / 60)
   if (mins <= 0) return 'due'
   if (mins === 1) return '1 min'
-  return `${mins} min`
+  return `${mins} mins`
 }
 
 function firstLineCoords(value: unknown): [number, number][] {
@@ -145,6 +150,19 @@ function firstLineCoords(value: unknown): [number, number][] {
 
 export function routeKey(item: Arrival): string {
   return `${item.lineId}:${item.direction}`
+}
+
+export function crowdingLabel(level: number): string {
+  if (level < 0.33) return 'Usually quiet'
+  if (level < 0.66) return 'Usually moderate'
+  return 'Usually busy'
+}
+
+export async function fetchCrowding(naptanId: string): Promise<number | null> {
+  const url = new URL(`/Crowding/${encodeURIComponent(naptanId)}/Live`, BASE)
+  const data = await getJson<CrowdingLiveJson>(url)
+  if (!data.dataAvailable || data.percentageOfBaseline == null) return null
+  return Math.min(1, Math.max(0, data.percentageOfBaseline))
 }
 
 export async function fetchLineRoute(lineId: string, direction: string): Promise<[number, number][]> {

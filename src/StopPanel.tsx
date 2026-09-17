@@ -1,5 +1,5 @@
 import type { Arrival, Stop } from './tfl'
-import { formatWait, routeKey } from './tfl'
+import { crowdingLabel, formatWait, isTubeStop, routeKey } from './tfl'
 
 type Props = {
   stop: Stop | null
@@ -8,6 +8,7 @@ type Props = {
   error: string | null
   open: boolean
   selectedRoute: string | null
+  crowding: number | null
   onToggle: () => void
   onRefresh: () => void
   onArrivalClick: (item: Arrival) => void
@@ -20,6 +21,7 @@ export function StopPanel({
   error,
   open,
   selectedRoute,
+  crowding,
   onToggle,
   onRefresh,
   onArrivalClick,
@@ -44,6 +46,14 @@ export function StopPanel({
         <div className="panel-body">
           {!stop && <p className="status">Click a stop on the map.</p>}
           {stop && modes && <p className="meta">{modes}</p>}
+          {stop && isTubeStop(stop) && crowding != null && (
+            <div className="crowding">
+              <p className="meta">{crowdingLabel(crowding)}</p>
+              <div className="crowding-track">
+                <div className="crowding-fill" style={{ width: `${crowding * 100}%` }} />
+              </div>
+            </div>
+          )}
           {stop && loading && <p className="status">Loading arrivals…</p>}
           {stop && error && <p className="status">{error}</p>}
           {stop && !loading && !error && arrivals.length === 0 && (

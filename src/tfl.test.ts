@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  crowdingLabel,
   fetchArrivals,
+  fetchCrowding,
   formatWait,
   isTubeStop,
   routeKey,
@@ -40,7 +42,7 @@ describe('formatWait', () => {
 
   it('shows minutes for later arrivals', () => {
     expect(formatWait(60)).toBe('1 min')
-    expect(formatWait(180)).toBe('3 min')
+    expect(formatWait(180)).toBe('3 mins')
   })
 })
 
@@ -85,6 +87,43 @@ describe('fetchArrivals', () => {
     expect(list).toHaveLength(8)
     expect(list.some((item) => item.lineName === 'skip-me')).toBe(false)
 
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('crowdingLabel', () => {
+  it('buckets quiet, moderate, and busy', () => {
+    expect(crowdingLabel(0)).toBe('Usually quiet')
+    expect(crowdingLabel(0.32)).toBe('Usually quiet')
+    expect(crowdingLabel(0.33)).toBe('Usually moderate')
+    expect(crowdingLabel(0.65)).toBe('Usually moderate')
+    expect(crowdingLabel(0.66)).toBe('Usually busy')
+    expect(crowdingLabel(1)).toBe('Usually busy')
+  })
+})
+
+describe('fetchCrowding', () => {
+  it('returns the clamped baseline when data is available', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(JSON.stringify({ dataAvailable: true, percentageOfBaseline: 0.4 }), { status: 200 }),
+      ),
+    )
+
+    await expect(fetchCrowding('940GZZLUCHX')).resolves.toBe(0.4)
+    vi.unstubAllGlobals()
+  })
+
+  it('returns null when TfL has no crowding data', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(JSON.stringify({ dataAvailable: false, percentageOfBaseline: 0 }), { status: 200 }),
+      ),
+    )
+
+    await expect(fetchCrowding('940GZZLUKTN')).resolves.toBeNull()
     vi.unstubAllGlobals()
   })
 })
